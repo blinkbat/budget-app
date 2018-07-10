@@ -82,14 +82,30 @@ var budgetController = (function() {
 			calculateBudget: function() {
 
 				// calc total income & expenses
-				calculateTotal(exp);
-				calculateTotal(inc);
+				calculateTotal('exp');
+				calculateTotal('inc');
 
 				// calc the budget: inc - exp
 				data.budget = data.totals.inc - data.totals.exp;
 
-				// calc the percentage of spent income
-				data.percentage = Math.round( (data.totals.exp / data.totals.inc) * 100 );
+				// calc the percentage of spent income IF possible
+				if (data.totals.inc > 0) {
+					data.percentage = Math.round( (data.totals.exp / data.totals.inc) * 100 );
+				} else {
+					data.percentage = -1;
+				}
+
+			},
+
+			getBudget: function() {
+
+				// this function only returns the budget data
+				return {
+					budget: 		data.budget,
+					totalInc: 	data.totals.inc,
+					totalExp: 	data.totals.exp,
+					percentage: data.percentage
+				}
 
 			},
 
@@ -216,16 +232,13 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 	var appUpdateBudget = function() {
 
 		// calculate new budget
-
-
+		budgetCtrl.calculateBudget();
 
 		// return the budget
-
-
+		var budget = budgetCtrl.getBudget();
 
 		// display budget
-
-
+		console.log(budget);
 
 	};
 
@@ -269,13 +282,8 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 // the args are called at the end by the IIFE
 })(budgetController, uiController);
 
-
+// start it up
 appController.init();
-
-
-
-
-
 
 
 
