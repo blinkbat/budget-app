@@ -79,6 +79,27 @@ var budgetController = (function() {
 
 			},
 
+			deleteItem: function(type, id) {
+
+				var idArr, index;
+
+				// roundabout way of finding the key (id)
+				var idArr = data.allItems[type].map( function(current) {
+					return current.id;
+				});
+
+				index = idArr.indexOf(id);
+
+				if (index !== -1) {
+					
+					// delete item if index present
+					// spice method removes elements -- see args
+					data.allItems[type].splice(index, 1);
+
+				}
+
+			},
+
 			calculateBudget: function() {
 
 				// calc total income & expenses
@@ -179,6 +200,16 @@ var uiController = (function() {
 			// insert HTML to DOM
 			// uses insertAdjacentHTML method -- see args
 			document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
+
+		},
+
+		deleteListItem: function(selectorId) {
+
+			var item;
+
+			// weird way to delete element. maybe just do display: none?
+			item = document.getElementById(selectorId);
+			item.parentNode.removeChild(item);
 
 		},
 
@@ -297,7 +328,7 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 	var appDeleteItem = function(event) {
 
-		var itemId;
+		var itemId, splitId, type, id;
 
 		// use event arg to determine where user clicked
 		// parentNode moves to next outer element in HTML structure
@@ -307,6 +338,21 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 		itemId = event.target.parentNode.parentNode.parentNode.parentNode.id;
 
 		if (itemId) {
+
+			// split id into parts
+			splitId = itemId.split('-');
+			type = splitId[0];
+			// make sure to convert ID to number for type comparison woes
+			id = parseInt(splitId[1]);
+
+			// delete item from data structure
+			budgetCtrl.deleteItem(type, id);
+
+			// delete item from UI
+			uiCtrl.deleteListItem(itemId);
+
+			// update & show new budget
+			appUpdateBudget();
 
 		}
 
