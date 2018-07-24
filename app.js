@@ -125,12 +125,17 @@ var budgetController = (function() {
 var uiController = (function() {
 
 	var domStrings = {
-		inputType: 		'.add__type',
-		inputDesc: 		'.add__description',
-		inputVal: 		'.add__value',
-		inputBtn: 		'.add__btn',
-		incContainer: '.income__list',
-		expContainer: '.expenses__list'
+		inputType: 				'.add__type',
+		inputDesc: 				'.add__description',
+		inputVal: 				'.add__value',
+		inputBtn: 				'.add__btn',
+		incContainer: 		'.income__list',
+		expContainer: 		'.expenses__list',
+		budgetLabel: 			'.budget__value',
+		incomeLabel: 			'.budget__income--value',
+		expensesLabel: 		'.budget__expenses--value',
+		percentageLabel: 	'.budget__expenses--percentage',
+		container: 				'.container'
 	};
 
 	// expose public methods
@@ -155,17 +160,18 @@ var uiController = (function() {
 
 					element = domStrings.incContainer;
 
-					html = '<div class="item clearfix" id="income-$id$"><div class="item__description">$descrip$</div><div class="right clearfix"> <div class="item__value">$value$</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+					html = '<div class="item clearfix" id="inc-$id$"><div class="item__description">$descrip$</div><div class="right clearfix"> <div class="item__value">$value$</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
 
 			} else if (type === 'exp') {
 
 					element = domStrings.expContainer;
 
-					html = '<div class="item clearfix" id="expense-$id$"><div class="item__description">$descrip$</div><div class="right clearfix"><div class="item__value">$value$</div><div class="item__percentage">$percent$</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+					html = '<div class="item clearfix" id="exp-$id$"><div class="item__description">$descrip$</div><div class="right clearfix"><div class="item__value">$value$</div><div class="item__percentage">$percent$</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
 
 			}
 
 			// populate str with data
+			// setting actual DOM ids etc. is extremely useful for manipulation
 			newHtml = html.replace('$id$', obj.id);
 			newHtml = newHtml.replace('$descrip$', obj.description);
 			newHtml = newHtml.replace('$value$', obj.value);
@@ -193,6 +199,22 @@ var uiController = (function() {
 			});
 
 			fieldsArr[0].focus();
+
+		},
+
+		displayBudget: function(obj) {
+
+			document.querySelector(domStrings.budgetLabel).textContent = obj.budget;
+
+			document.querySelector(domStrings.incomeLabel).textContent = obj.totalInc;
+
+			document.querySelector(domStrings.expensesLabel).textContent = obj.totalExp;
+
+			if (obj.percentage > 0) {
+				document.querySelector(domStrings.percentageLabel).textContent = obj.percentage + '%';
+			} else {
+				document.querySelector(domStrings.percentageLabel).textContent = '-';
+			}
 
 		},
 
@@ -227,6 +249,9 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 			}
 		});
 
+		// event delegation -- select parent class of all inc/exp rows (container)
+		document.querySelector(domStrings.container).addEventListener('click', appDeleteItem);
+
 	};
 
 	var appUpdateBudget = function() {
@@ -238,7 +263,7 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 		var budget = budgetCtrl.getBudget();
 
 		// display budget
-		console.log(budget);
+		uiCtrl.displayBudget(budget);
 
 	};
 
@@ -270,9 +295,32 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 	};
 
+	var appDeleteItem = function(event) {
+
+		var itemId;
+
+		// use event arg to determine where user clicked
+		// parentNode moves to next outer element in HTML structure
+		// invoked parentNode 4x to move up to "item" element
+
+		// hardcoded DOM traversing could potentially be a problem. careful!
+		itemId = event.target.parentNode.parentNode.parentNode.parentNode.id;
+
+		if (itemId) {
+
+		}
+
+	};
+
 	return {
 		init: function() {
 			console.log('Application online.');
+			uiCtrl.displayBudget({
+					budget: 		0,
+					totalInc: 	0,
+					totalExp: 	0,
+					percentage: -1
+			});
 			appSetupListeners();
 		}
 
