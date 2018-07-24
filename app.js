@@ -6,8 +6,21 @@ var budgetController = (function() {
 		this.id = id;
 		this.description = description;
 		this.value = value;
+		this.percentage = -1;
 	};
 
+	Expense.prototype.calcPercentage = function(totalIncome) {
+		if (totalIncome > 0) {
+			this.percentage = Math.round( (this.value / totalIncome) * 100 );
+		} else {
+			this.percentage = -1;
+		}
+
+	};
+
+	Expense.prototype.getPercentage = function() {
+		return this.percentage;
+	};
 
 	var Income = function(id, description, value) {
 		this.id = id;
@@ -118,6 +131,24 @@ var budgetController = (function() {
 
 			},
 
+			calculatePercentages: function() {
+
+				data.allItems.exp.forEach( function(current) {
+					current.calcPercentage(data.totals.inc);
+				});
+
+			},
+
+			getPercentages: function() {
+
+				var allPercentages = data.allItems.exp.map( function(current) {
+					return current.getPercentage();
+				});
+
+				return allPercentages;
+
+			},
+
 			getBudget: function() {
 
 				// this function only returns the budget data
@@ -156,7 +187,8 @@ var uiController = (function() {
 		incomeLabel: 			'.budget__income--value',
 		expensesLabel: 		'.budget__expenses--value',
 		percentageLabel: 	'.budget__expenses--percentage',
-		container: 				'.container'
+		container: 				'.container',
+		expPercLabel: 		'.item__percentage'
 	};
 
 	// expose public methods
@@ -249,6 +281,28 @@ var uiController = (function() {
 
 		},
 
+		displayPercentages: function(percentages) {
+
+			var fields = document.querySelectorAll(domStrings.expPercLabel);
+
+			var nodeListForEach = function(list, callback) {
+				for (var i = 0; i < list.length; i++) {
+					callback(list[i], i);
+				}
+			};
+
+			nodeListForEach( fields, function(current, index) {
+				
+				if (percentages[index] > 0) {
+					current.textContent = percentages[index] + '%';
+				} else {
+					current.textContent = '-';
+				}
+
+			});
+
+		},
+
 		getDomStrings: function() {
 			return domStrings;
 		}
@@ -298,6 +352,19 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 	};
 
+	var appUpdatePercentages = function() {
+
+		// calcuate percentages
+		budgetCtrl.calculatePercentages();
+
+		// read percentages from budget controller
+		var percentages = budgetCtrl.getPercentages();
+
+		// update the UI
+		uiCtrl.displayPercentages(percentages);
+
+	};
+
 	var appAddItem = function() {
 
 			// var declare
@@ -321,6 +388,9 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 					// calculate & update budget
 					appUpdateBudget();
+
+					// calculate & update percentages
+					appUpdatePercentages();
 
 			}
 
@@ -353,6 +423,9 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 			// update & show new budget
 			appUpdateBudget();
+
+			// calculate & update percentages
+			appUpdatePercentages();
 
 		}
 
