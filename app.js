@@ -62,6 +62,7 @@ var budgetController = (function() {
 	};
 
 
+	// expose public methods
 	return {
 
 			addItem: function(type, desc, val) {
@@ -188,7 +189,45 @@ var uiController = (function() {
 		expensesLabel: 		'.budget__expenses--value',
 		percentageLabel: 	'.budget__expenses--percentage',
 		container: 				'.container',
-		expPercLabel: 		'.item__percentage'
+		expPercLabel: 		'.item__percentage',
+		dateLabel: 				'.budget__title--month'
+	};
+
+	var formatNumber = function(num, type) {
+
+		var numSplit, int, dec, sign;
+
+		// + or - before the number for inc or exp
+		// 2 decimal points, commas for thousands
+
+		num = Math.abs(num);
+
+		// not Math obj, Number prototype
+		num = num.toFixed(2);
+
+		// split into int and decimal
+		numSplit = num.split('.');
+		
+		int = numSplit[0];
+
+		if (int.length > 3) {
+			// start at 0, read 1 char, etc. do parantheses work here?
+			int = int.substr( 0, (int.length - 3) ) + ',' + int.substr( (int.length - 3), int.length );
+		}
+
+		dec = numSplit[1];
+
+		// turnary op to find sign
+		type === 'exp' ? sign = '-' : sign = '+';
+
+		return sign + ' ' + int + '.' + dec;
+
+	};
+
+	var nodeListForEach = function(list, callback) {
+		for (var i = 0; i < list.length; i++) {
+			callback(list[i], i);
+		}
 	};
 
 	// expose public methods
@@ -227,7 +266,7 @@ var uiController = (function() {
 			// setting actual DOM ids etc. is extremely useful for manipulation
 			newHtml = html.replace('$id$', obj.id);
 			newHtml = newHtml.replace('$descrip$', obj.description);
-			newHtml = newHtml.replace('$value$', obj.value);
+			newHtml = newHtml.replace( '$value$', formatNumber(obj.value, type) );
 
 			// insert HTML to DOM
 			// uses insertAdjacentHTML method -- see args
@@ -267,11 +306,15 @@ var uiController = (function() {
 
 		displayBudget: function(obj) {
 
-			document.querySelector(domStrings.budgetLabel).textContent = obj.budget;
+			var type;
 
-			document.querySelector(domStrings.incomeLabel).textContent = obj.totalInc;
+			obj.budget > 0 ? type = 'inc' : type = 'exp';
 
-			document.querySelector(domStrings.expensesLabel).textContent = obj.totalExp;
+			document.querySelector(domStrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+
+			document.querySelector(domStrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
+
+			document.querySelector(domStrings.expensesLabel).textContent = formatNumber(obj.totalExp, 'exp');
 
 			if (obj.percentage > 0) {
 				document.querySelector(domStrings.percentageLabel).textContent = obj.percentage + '%';
@@ -285,12 +328,6 @@ var uiController = (function() {
 
 			var fields = document.querySelectorAll(domStrings.expPercLabel);
 
-			var nodeListForEach = function(list, callback) {
-				for (var i = 0; i < list.length; i++) {
-					callback(list[i], i);
-				}
-			};
-
 			nodeListForEach( fields, function(current, index) {
 				
 				if (percentages[index] > 0) {
@@ -300,6 +337,43 @@ var uiController = (function() {
 				}
 
 			});
+
+		},
+
+		displayMonth: function() {
+
+			var now, year, month, monthArr;
+
+			// use Date obj constructor
+			now = new Date();
+
+			monthArr = [
+				'January', 'February', 'March', 'April',
+				'May', 'June', 'July', 'August',
+				'September', 'October', 'November', 'December'
+			];
+
+			year = now.getFullYear();
+			month = monthArr[ now.getMonth() ];
+
+			document.querySelector(domStrings.dateLabel).textContent = month + ' ' + year;
+
+		},
+
+		changedType: function() {
+
+			var fields = document.querySelectorAll(
+				domStrings.inputType + ',' +
+				domStrings.inputDesc + ',' +
+				domStrings.inputVal
+			);
+
+			nodeListForEach(fields, function(curr) {
+				// use classList to toggle classes on elems
+				curr.classList.toggle('red-focus');
+			});
+
+			document.querySelector(domStrings.inputBtn).classList.toggle('red');
 
 		},
 
@@ -336,6 +410,8 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 		// event delegation -- select parent class of all inc/exp rows (container)
 		document.querySelector(domStrings.container).addEventListener('click', appDeleteItem);
+
+		document.querySelector(domStrings.inputType).addEventListener('change', uiCtrl.changedType);
 
 	};
 
@@ -431,6 +507,7 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 
 	};
 
+	// public method is init
 	return {
 		init: function() {
 			console.log('Application online.');
@@ -440,6 +517,7 @@ var appController = ( function(budgetCtrl, uiCtrl) {
 					totalExp: 	0,
 					percentage: -1
 			});
+			uiCtrl.displayMonth();
 			appSetupListeners();
 		}
 
